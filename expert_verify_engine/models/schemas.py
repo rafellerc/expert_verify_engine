@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class Competence(BaseModel):
@@ -10,10 +10,10 @@ class CompetenceModel(BaseModel):
     competences: list[Competence]
 
 
-class CandidateModel(BaseModel):
+class CandidateProfile(BaseModel):
     competences: dict[str, int]
-    behavior: str
-    persona: str
+    fraud_strategy: str
+    linguistic_profile: str
 
 
 class CandidateSheet(BaseModel):
@@ -43,3 +43,8 @@ class DecisionResult(BaseModel):
     accepted: bool
     score: float
     threshold: float
+
+
+class TerminationDecision(BaseModel):
+    continue_: bool = Field(validation_alias="continue")
+    reason: str

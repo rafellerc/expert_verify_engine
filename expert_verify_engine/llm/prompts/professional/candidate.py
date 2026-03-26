@@ -13,8 +13,8 @@ Output ONLY a JSON object:
 }}
 
 Rules:
-- If behavior is "honest": profile reflects true competences accurately
-- If behavior is "cheater": exaggerate experience, add inconsistencies, include plausible-sounding but fake projects
+- If fraud_strategy is "honest": profile reflects true competences accurately
+- If fraud_strategy is "cheater": exaggerate experience, add inconsistencies, include plausible-sounding but fake projects
 """
 
 CANDIDATE_ANSWER_PROMPT = """You are a job candidate answering interview questions.

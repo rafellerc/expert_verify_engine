@@ -2,7 +2,11 @@ import json
 
 from expert_verify_engine.belief.belief_state import BeliefState
 from expert_verify_engine.llm.client import LLMClient
-from expert_verify_engine.models.schemas import Action, CandidateSheet
+from expert_verify_engine.models.schemas import (
+    Action,
+    CandidateSheet,
+    TerminationDecision,
+)
 from expert_verify_engine.utils.parsing import parse_json
 
 
@@ -54,8 +58,8 @@ def should_continue(
     )
 
     response = client.chat(prompt)
-    result = parse_json(response, {"continue": bool, "reason": str})
-    return result["continue"], result["reason"]
+    result = parse_json(response, TerminationDecision)
+    return result.continue_, result.reason
 
 
 def generate_explanation(
@@ -82,5 +86,8 @@ def generate_explanation(
         decision=decision,
     )
 
+    from expert_verify_engine.utils.parsing import extract_json
+
     response = client.chat(prompt)
-    return parse_json(response, dict)
+    json_str = extract_json(response)
+    return json.loads(json_str)

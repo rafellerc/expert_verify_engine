@@ -30,7 +30,7 @@ from expert_verify_engine.llm.prompts.loader import (
 from expert_verify_engine.models.candidate import generate_candidate_sheet
 from expert_verify_engine.models.generators import generate_competences
 from expert_verify_engine.models.schemas import (
-    CandidateModel,
+    CandidateProfile,
     CandidateSheet,
     CompetenceModel,
 )
@@ -48,7 +48,7 @@ def load_role_description(path: Path) -> str:
 
 def run_interview(
     role_description: str,
-    candidate: CandidateModel,
+    candidate: CandidateProfile,
     client: LLMClient,
     trajectory: Trajectory,
     output_dir: Path,
@@ -64,7 +64,7 @@ def run_interview(
     console.print(
         f"        [dim]Will be saved to: {run_dir / 'competence_model.json'}[/dim]"
     )
-    with yaspin(text="[competence model]", color="cyan").connected_to(console):
+    with yaspin(text="[competence model]", color="cyan"):
         competence_model = generate_competences(
             role_description, client, prompts.get("COMPETENCE_GENERATOR_PROMPT")
         )
@@ -79,7 +79,7 @@ def run_interview(
     console.print(
         f"        [dim]Will be saved to: {run_dir / 'candidate_sheet.json'}[/dim]"
     )
-    with yaspin(text="[candidate sheet]", color="cyan").connected_to(console):
+    with yaspin(text="[candidate sheet]", color="cyan"):
         candidate_sheet = generate_candidate_sheet(
             candidate, client, prompts.get("CANDIDATE_GENERATOR_PROMPT")
         )
@@ -96,7 +96,7 @@ def run_interview(
         console.print(f"\n[bold yellow]--- Step {step + 1} ---[/bold yellow]")
 
         competence_json_str = json.dumps(competence_json)
-        with yaspin(text="[action]", color="yellow").connected_to(console):
+        with yaspin(text="[action]", color="yellow"):
             action = generate_question(
                 belief=belief,
                 candidate_sheet=candidate_sheet,
@@ -111,7 +111,7 @@ def run_interview(
             f"[dim]Target: {', '.join(action.target_competences)} | Type: {action.type}[/dim]"
         )
 
-        answer = typer.prompt("Your answer")
+        answer = input("Your answer ")
 
         if answer.strip().startswith("/"):
             cmd = answer.strip().lower()
@@ -132,7 +132,7 @@ def run_interview(
                 console.print("[dim]Resampling question...[/dim]")
                 continue
 
-        with yaspin(text="[observation]", color="green").connected_to(console):
+        with yaspin(text="[observation]", color="green"):
             evidence = evaluate_answer(
                 question=action.question,
                 answer=answer,
@@ -157,7 +157,7 @@ def run_interview(
             belief=belief,
         )
 
-        with yaspin(text="[termination]", color="cyan").connected_to(console):
+        with yaspin(text="[termination]", color="cyan"):
             continue_interview, reason = should_continue(
                 belief=belief,
                 history=trajectory.get_history(),
@@ -214,13 +214,13 @@ def start(
     console.print(f"[bold cyan]Starting interview with run_id: {run_id}[/bold cyan]")
 
     if candidate:
-        candidate_model = CandidateModel.model_validate_json(candidate.read_text())
+        candidate_profile = CandidateProfile.model_validate_json(candidate.read_text())
     else:
         console.print("[dim]No candidate file provided, using default.[/dim]")
-        candidate_model = CandidateModel(
+        candidate_profile = CandidateProfile(
             competences={"Python": 1, "Machine Learning": 1, "Data Analysis": 1},
-            behavior="honest",
-            persona="simple",
+            fraud_strategy="honest",
+            linguistic_profile="simple",
         )
 
     traj_manager = TrajectoryManager(output_dir)
@@ -239,7 +239,7 @@ def start(
 
     belief, competence_model, candidate_sheet = run_interview(
         role_desc,
-        candidate_model,
+        candidate_profile,
         client,
         trajectory,
         output_dir,
@@ -271,7 +271,7 @@ def start(
 
     console.print("\n[bold cyan]Generating explanation...[/bold cyan]")
     final_belief = belief.get_all_probabilities()
-    with yaspin(text="[explanation]", color="magenta").connected_to(console):
+    with yaspin(text="[explanation]", color="magenta"):
         explanation = generate_explanation(
             history=trajectory.get_history(),
             belief_trajectory=trajectory.to_dict()["turns"],
@@ -359,7 +359,7 @@ def fork(
         competence_json_str = json.dumps(original_traj.competence_model)
         candidate_sheet = CandidateSheet(**original_traj.candidate_sheet)
 
-        with yaspin(text="[action]", color="yellow").connected_to(console):
+        with yaspin(text="[action]", color="yellow"):
             action = generate_question(
                 belief=belief,
                 candidate_sheet=candidate_sheet,
@@ -373,7 +373,7 @@ def fork(
             f"[dim]Target: {', '.join(action.target_competences)} | Type: {action.type}[/dim]"
         )
 
-        answer = typer.prompt("Your answer")
+        answer = input("Your answer ")
 
         if answer.strip().startswith("/"):
             cmd = answer.strip().lower()
@@ -394,7 +394,7 @@ def fork(
                 console.print("[dim]Resampling question...[/dim]")
                 continue
 
-        with yaspin(text="[observation]", color="green").connected_to(console):
+        with yaspin(text="[observation]", color="green"):
             evidence = evaluate_answer(
                 question=action.question,
                 answer=answer,
@@ -418,7 +418,7 @@ def fork(
             belief=belief,
         )
 
-        with yaspin(text="[termination]", color="cyan").connected_to(console):
+        with yaspin(text="[termination]", color="cyan"):
             continue_interview, reason = should_continue(
                 belief=belief,
                 history=new_traj.get_history(),
