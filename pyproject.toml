@@ -1,21 +1,26 @@
 [project]
 name = "expert-verify-engine"
 version = "0.1.0"
-description = "Add your description here"
+description = "LLM-driven candidate evaluation using POMDP with structured latent state"
 readme = "README.md"
 requires-python = ">=3.12"
 dependencies = [
     "gymnasium>=1.2.3",
-    "httpx>=0.28.1",
     "jupyter>=1.1.1",
     "matplotlib>=3.10.8",
+    "openai>=1.0.0",
     "pygame>=2.6.1",
     "pydantic>=2.10.0",
     "rich>=14.3.3",
     "tenacity>=9.0.0",
     "torch>=2.10.0",
     "typer>=0.15.0",
+    "python-dotenv>=1.2.2",
 ]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["expert_verify_engine*"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
