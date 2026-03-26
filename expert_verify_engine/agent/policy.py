@@ -2,11 +2,6 @@ import json
 
 from expert_verify_engine.belief.belief_state import BeliefState
 from expert_verify_engine.llm.client import LLMClient
-from expert_verify_engine.llm.prompts.action import (
-    ACTION_GENERATOR_PROMPT,
-    TERMINATION_PROMPT,
-)
-from expert_verify_engine.llm.prompts.explanation import EXPLANATION_PROMPT
 from expert_verify_engine.models.schemas import Action, CandidateSheet
 from expert_verify_engine.utils.parsing import parse_json
 
@@ -17,12 +12,19 @@ def generate_question(
     competence_model_json: str,
     history: str,
     client: LLMClient,
+    action_generator_prompt: str | None = None,
 ) -> Action:
+    from expert_verify_engine.llm.prompts.student.action import (
+        ACTION_GENERATOR_PROMPT as STUDENT_ACTION,
+    )
+
+    action_prompt = action_generator_prompt or STUDENT_ACTION  # noqa: N806
+
     competence_model_str = competence_model_json
     belief_state_str = json.dumps(belief.get_all_probabilities(), indent=2)
     candidate_sheet_str = f"Summary: {candidate_sheet.summary}\nExperiences: {', '.join(candidate_sheet.experiences)}\nClaims: {', '.join(candidate_sheet.claims)}"
 
-    prompt = ACTION_GENERATOR_PROMPT.format(
+    prompt = action_prompt.format(
         competence_model=competence_model_str,
         candidate_sheet=candidate_sheet_str,
         belief_state=belief_state_str,
@@ -37,10 +39,16 @@ def should_continue(
     belief: BeliefState,
     history: str,
     client: LLMClient,
+    termination_prompt: str | None = None,
 ) -> tuple[bool, str]:
+    from expert_verify_engine.llm.prompts.student.action import (
+        TERMINATION_PROMPT as STUDENT_TERMINATION,
+    )
+
+    term_prompt = termination_prompt or STUDENT_TERMINATION  # noqa: N806
     belief_state_str = json.dumps(belief.get_all_probabilities(), indent=2)
 
-    prompt = TERMINATION_PROMPT.format(
+    prompt = term_prompt.format(
         history=history or "No conversation yet.",
         belief_state=belief_state_str,
     )
@@ -56,11 +64,18 @@ def generate_explanation(
     final_belief: dict[str, float],
     decision: str,
     client: LLMClient,
+    explanation_prompt: str | None = None,
 ) -> dict:
+    from expert_verify_engine.llm.prompts.student.explanation import (
+        EXPLANATION_PROMPT as STUDENT_EXPLANATION,
+    )
+
+    explanation_p = explanation_prompt or STUDENT_EXPLANATION  # noqa: N806
+
     belief_trajectory_str = json.dumps(belief_trajectory, indent=2)
     final_belief_str = json.dumps(final_belief, indent=2)
 
-    prompt = EXPLANATION_PROMPT.format(
+    prompt = explanation_p.format(
         history=history,
         belief_trajectory=belief_trajectory_str,
         final_belief=final_belief_str,

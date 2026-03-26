@@ -1,19 +1,13 @@
-Basic Science Specialist
+role_type: student
+name: Basic Science
 
-We are looking for a Basic Science Specialist with foundational knowledge in scientific concepts.
+We are looking for a student with foundational knowledge in basic science.
 
 Requirements:
-- Must understand the scientific method and experimental design
-- Must know the three states of matter (solid, liquid, gas) and their properties
-- Must understand basic chemistry: elements, compounds, mixtures, atomic structure
-- Must know the periodic table first 20 elements (Hydrogen through Calcium)
+- Must know the three states of matter (solid, liquid, gas)
+- Must know basic chemistry: elements, compounds, mixtures
+- Must know the periodic table first 10 elements (Hydrogen through Neon)
 - Must understand Newton's three laws of motion
-- Must know forms of energy: kinetic, potential, thermal, chemical, electrical
-- Must understand the water cycle (evaporation, condensation, precipitation, collection)
-- Must know the structure of the Earth (crust, mantle, core) and plate tectonics
-- Must understand basic biology: cell structure, photosynthesis, cellular respiration
-
-Nice to have:
-- Knowledge of the solar system and planetary order
-- Understanding of the electromagnetic spectrum
-- Knowledge of basic geological eras and fossil formation
+- Must know forms of energy: kinetic, potential, thermal
+- Must understand the water cycle (evaporation, condensation, precipitation)
+- Must know basic biology: cell structure, photosynthesis

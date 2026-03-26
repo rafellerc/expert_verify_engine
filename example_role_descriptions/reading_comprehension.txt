@@ -1,20 +1,12 @@
-English Reading Comprehension Specialist
+role_type: student
+name: Reading Comprehension
 
-We are looking for a Reading Comprehension Specialist with the ability to understand and analyze written English text.
+We are looking for a student with reading comprehension skills.
 
 Requirements:
-- Must be able to identify the main idea and supporting details of a passage
-- Must understand the author's purpose and tone
-- Must be able to make inferences and draw conclusions from text
-- Must understand cause and effect relationships in narratives
-- Must be able to identify sequence of events
+- Must be able to identify the main idea of a passage
+- Must be able to find supporting details
+- Must be able to make simple inferences from text
+- Must understand sequence of events in a story
 - Must understand vocabulary in context
-- Must be able to compare and contrast ideas within a text
-- Must be able to identify figurative language (metaphors, similes, personification)
-- Must understand basic story elements: plot, setting, characters, conflict, resolution
-- Must be able to summarize a passage in one's own words
-
-Nice to have:
-- Ability to analyze poetry and literary devices
-- Understanding of different genres and their characteristics
-- Ability to evaluate author's credibility and bias
+- Must be able to summarize a short passage

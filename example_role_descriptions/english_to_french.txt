@@ -1,19 +1,12 @@
-English to French Translator
+role_type: student
+name: English to French
 
-We are looking for an English to French Translator with basic language conversion skills.
+We are looking for a student who can translate English to French.
 
 Requirements:
 - Must be able to translate common English phrases to French
-- Must know basic French vocabulary (at least 100 common words)
+- Must know basic French vocabulary (at least 50 common words)
 - Must understand French sentence structure (subject-verb-object)
-- Must know the present tense conjugations of common verbs (avoir, être, aller, faire)
-- Must understand gender in French (masculine/feminine nouns)
-- Must know numbers 1-20 in French
-- Must know days of the week and months in French
-- Must be able to form basic questions in French
-- Must understand the difference between formal and informal "you" (vous vs tu)
-
-Nice to have:
-- Knowledge of French past tense (passé composé)
-- Understanding of French negation
-- Basic knowledge of French idioms
+- Must know present tense of common verbs (avoir, être, aller, faire)
+- Must know numbers 1-10 in French
+- Must know days of the week in French

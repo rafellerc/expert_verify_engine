@@ -1,6 +1,7 @@
-Arithmetic Operations Specialist
+role_type: student
+name: Arithmetic Operations
 
-We are looking for an Arithmetic Operations Specialist to perform basic mathematical calculations.
+We are looking for a student who can perform basic arithmetic operations.
 
 Requirements:
 - Must be able to perform addition with up to 2-digit integers
@@ -9,7 +10,3 @@ Requirements:
 - Must be able to perform integer division (no remainders)
 - All operations must use only integers (no decimals)
 - Must provide exact integer results only
-
-Nice to have:
-- Ability to verify calculations by alternative methods
-- Ability to explain the steps of each operation
