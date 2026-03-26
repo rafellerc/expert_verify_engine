@@ -5,6 +5,17 @@ from typing import Any
 
 
 class LLMLogger:
+    PROMPT_TYPE_MAP = {
+        "ACTION_GENERATOR_PROMPT": "action_generator",
+        "CANDIDATE_GENERATOR_PROMPT": "candidate_generator",
+        "CANDIDATE_ANSWER_PROMPT": "candidate_answer",
+        "COMPETENCE_GENERATOR_PROMPT": "competence_generator",
+        "COMPETENCE_VALIDATION_PROMPT": "competence_validation",
+        "EXPLANATION_PROMPT": "explanation",
+        "OBSERVATION_PROMPT": "observation",
+        "TERMINATION_PROMPT": "termination",
+    }
+
     def __init__(self, output_dir: Path) -> None:
         self.output_dir = output_dir
         self.run_dir: Path | None = None
@@ -12,6 +23,11 @@ class LLMLogger:
     def set_run_id(self, run_id: str) -> None:
         self.run_dir = self.output_dir / run_id / "llm_calls"
         self.run_dir.mkdir(parents=True, exist_ok=True)
+
+    def _get_folder_name(self, prompt_type: str | None) -> str:
+        if prompt_type is None:
+            return "unknown"
+        return self.PROMPT_TYPE_MAP.get(prompt_type, prompt_type)
 
     def log(
         self,
@@ -23,8 +39,13 @@ class LLMLogger:
         if not self.run_dir:
             return
 
-        model_dir = self.run_dir / model_name
-        model_dir.mkdir(parents=True, exist_ok=True)
+        meta = metadata or {}
+        prompt_type = meta.get("prompt_type")
+        timing = meta.get("timing", {})
+
+        folder_name = self._get_folder_name(prompt_type)
+        call_dir = self.run_dir / folder_name
+        call_dir.mkdir(parents=True, exist_ok=True)
 
         timestamp = datetime.now().strftime("%Y%m%d_%H%M%S_%f")
         filename = f"{timestamp}.json"
@@ -32,9 +53,13 @@ class LLMLogger:
         data = {
             "timestamp": datetime.now().isoformat(),
             "model": model_name,
+            "prompt_type": folder_name,
             "prompt": prompt,
             "response": response,
-            "metadata": metadata or {},
+            "timing": timing,
+            "metadata": {
+                k: v for k, v in meta.items() if k not in ("prompt_type", "timing")
+            },
         }
 
-        (model_dir / filename).write_text(json.dumps(data, indent=2))
+        (call_dir / filename).write_text(json.dumps(data, indent=2))

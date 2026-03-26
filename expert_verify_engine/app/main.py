@@ -256,13 +256,14 @@ def run_interview(
                     client=client,
                     termination_prompt=prompts.get("TERMINATION_PROMPT"),
                 )
-            console.print(f"[dim]LLM termination: {term_reason}[/dim]")
+            reason_escaped = term_reason.replace("[", "[[").replace("]", "]]")
+            console.print(f"[dim]LLM termination: {reason_escaped}[/dim]")
 
             step += 1
             if step >= max_steps:
                 break
             if not continue_interview:
-                console.print("[bold yellow]Interview ended early by model.[/yellow]")
+                console.print("[yellow]Interview ended early by model.[/yellow]")
                 break
         else:
             step += 1
@@ -526,7 +527,8 @@ def fork(
                 history=new_traj.get_history(),
                 client=client,
             )
-        console.print(f"[dim]Termination check: {reason}[/dim]")
+        reason_escaped = reason.replace("[", "[[").replace("]", "]]")
+        console.print(f"[dim]Termination check: {reason_escaped}[/dim]")
 
         step += 1
 

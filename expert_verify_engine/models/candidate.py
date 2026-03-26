@@ -15,5 +15,5 @@ def generate_candidate_sheet(
     candidate_prompt = candidate_generator_prompt or STUDENT_PROMPT  # noqa: N806
 
     prompt = candidate_prompt.format(ground_truth=ground_truth)
-    response = client.chat(prompt)
+    response = client.chat(prompt, prompt_type="CANDIDATE_GENERATOR_PROMPT")
     return parse_json(response, CandidateSheet)

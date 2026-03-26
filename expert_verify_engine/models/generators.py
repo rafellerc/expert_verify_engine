@@ -16,7 +16,7 @@ def generate_competences(
     competence_prompt = competence_generator_prompt or STUDENT_PROMPT  # noqa: N806
 
     prompt = competence_prompt.format(role_description=role_description)
-    response = client.chat(prompt)
+    response = client.chat(prompt, prompt_type="COMPETENCE_GENERATOR_PROMPT")
     model = parse_json(response, CompetenceModel)
     normalized = normalize_competences(model.competences)
     return CompetenceModel(competences=normalized)

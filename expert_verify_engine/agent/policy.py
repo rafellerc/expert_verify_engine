@@ -35,7 +35,7 @@ def generate_question(
         history=history or "No previous questions.",
     )
 
-    response = client.chat(prompt)
+    response = client.chat(prompt, prompt_type="ACTION_GENERATOR_PROMPT")
     return parse_json(response, Action)
 
 
@@ -57,7 +57,7 @@ def should_continue(
         belief_state=belief_state_str,
     )
 
-    response = client.chat(prompt)
+    response = client.chat(prompt, prompt_type="TERMINATION_PROMPT")
     result = parse_json(response, TerminationDecision)
     return result.continue_, result.reason
 
@@ -88,6 +88,6 @@ def generate_explanation(
 
     from expert_verify_engine.utils.parsing import extract_json
 
-    response = client.chat(prompt)
+    response = client.chat(prompt, prompt_type="EXPLANATION_PROMPT")
     json_str = extract_json(response)
     return json.loads(json_str)

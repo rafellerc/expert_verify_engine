@@ -22,5 +22,5 @@ def evaluate_answer(
         target_competences=", ".join(target_competences),
     )
 
-    response = client.chat(prompt)
+    response = client.chat(prompt, prompt_type="OBSERVATION_PROMPT")
     return parse_json(response, EvidencePacket)
