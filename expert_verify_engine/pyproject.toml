@@ -1,0 +1,35 @@
+[project]
+name = "expert-verify-engine"
+version = "0.1.0"
+description = "Add your description here"
+readme = "README.md"
+requires-python = ">=3.12"
+dependencies = [
+    "gymnasium>=1.2.3",
+    "httpx>=0.28.1",
+    "jupyter>=1.1.1",
+    "matplotlib>=3.10.8",
+    "pygame>=2.6.1",
+    "pydantic>=2.10.0",
+    "rich>=14.3.3",
+    "tenacity>=9.0.0",
+    "torch>=2.10.0",
+    "typer>=0.15.0",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_functions = "test_*"
+addopts = "-v --tb=short"
+
+[tool.ruff]
+line-length = 88
+target-version = "py312"
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "N", "UP", "B", "C4", "SIM"]
+ignore = ["E501"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["src"]
