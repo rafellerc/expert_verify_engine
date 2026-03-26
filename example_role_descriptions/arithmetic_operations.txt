@@ -1,0 +1,15 @@
+Arithmetic Operations Specialist
+
+We are looking for an Arithmetic Operations Specialist to perform basic mathematical calculations.
+
+Requirements:
+- Must be able to perform addition with up to 2-digit integers
+- Must be able to perform subtraction with up to 2-digit integers
+- Must be able to perform multiplication with up to 2-digit integers
+- Must be able to perform integer division (no remainders)
+- All operations must use only integers (no decimals)
+- Must provide exact integer results only
+
+Nice to have:
+- Ability to verify calculations by alternative methods
+- Ability to explain the steps of each operation

@@ -35,7 +35,7 @@ candidates/            # Pre-generated candidate profiles (JSON)
 
 ### 1.1 LLM Client
 - OpenRouter wrapper with retry logic
-- Uses `httpx` for API calls
+- Uses OpenAI SDK (`openai` package) for API calls
 - API key from `os.getenv("OPENROUTER_API_KEY")`
 
 ### 1.2 Pydantic Schemas
@@ -176,7 +176,7 @@ expert_verify_engine/
 
 ## Dependencies
 
-- `httpx` - OpenRouter API
+- `openai` - OpenRouter API (via OpenAI SDK)
 - `pydantic` - Schema validation
 - `rich` - CLI formatting
 - `typer` - CLI interface

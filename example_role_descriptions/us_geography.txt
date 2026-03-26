@@ -1,0 +1,16 @@
+US Geography Specialist
+
+We are looking for a US Geography Specialist with comprehensive knowledge of American geography.
+
+Requirements:
+- Must be able to identify all 50 US states and their locations
+- Must know the major US cities in each region (Northeast, Southeast, Midwest, Southwest, West)
+- Must know the major US rivers (Mississippi, Colorado, Hudson, Ohio, Missouri)
+- Must know the major US mountain ranges (Rockies, Appalachians, Sierra Nevada, Cascades)
+- Must know the US territories (Puerto Rico, US Virgin Islands, Guam, American Samoa, Northern Mariana Islands)
+- Must know the general climate zones across the US
+
+Nice to have:
+- Knowledge of US national parks
+- Knowledge of state capitals
+- Knowledge of major US highways and interstates
