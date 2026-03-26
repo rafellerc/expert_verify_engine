@@ -19,7 +19,13 @@ from expert_verify_engine.app.config import (
     get_timestamp,
 )
 from expert_verify_engine.audit_log.trajectory import Trajectory, TrajectoryManager
+from expert_verify_engine.audit_log.llm_logger import LLMLogger
 from expert_verify_engine.belief.belief_state import BeliefState
+from expert_verify_engine.belief.decision_stats import (
+    compute_decision_stats,
+    select_best_competence,
+)
+from expert_verify_engine.belief.stopping import StoppingCriteria, should_stop
 from expert_verify_engine.belief.updater import update_belief
 from expert_verify_engine.llm.client import LLMClient, LLMError
 from expert_verify_engine.llm.prompts.loader import (
@@ -30,7 +36,7 @@ from expert_verify_engine.llm.prompts.loader import (
 from expert_verify_engine.models.candidate import generate_candidate_sheet
 from expert_verify_engine.models.generators import generate_competences
 from expert_verify_engine.models.schemas import (
-    CandidateProfile,
+    CandidateDescription,
     CandidateSheet,
     CompetenceModel,
 )
@@ -46,9 +52,43 @@ def load_role_description(path: Path) -> str:
     return path.read_text()
 
 
+def prompt_candidate_description() -> CandidateDescription:
+    console.print("\n[bold cyan]Enter candidate description:[/bold cyan]")
+    console.print(
+        "[dim]Enter a summary of the candidate including background, experiences, and any notable traits[/dim]"
+    )
+    description = input("Description: ").strip()
+    return description or "A candidate with standard background"
+
+
+def display_decision_stats(
+    belief: BeliefState, weights: dict[str, float], threshold: float
+) -> None:
+    """Display decision statistics in console."""
+    alpha_beta = belief.alpha_beta
+    mc_samples = get_config("mc_samples", 10000)
+    e_plus = get_config("e_plus", 0.5)
+    e_minus = get_config("e_minus", 0.5)
+
+    stats = compute_decision_stats(
+        alpha_beta,
+        weights,
+        threshold,
+        e_plus=e_plus,
+        e_minus=e_minus,
+        mc_samples=mc_samples,
+    )
+
+    console.print(
+        f"[dim]Decision Stats: P(Accept)={stats.p_accept:.2f} | "
+        f"P(Accept)MC={stats.p_accept_mc:.2f} | Z={stats.z_score:.2f} | "
+        f"Entropy={stats.entropy:.3f} | Max IG={stats.max_ig:.3f}[/dim]"
+    )
+
+
 def run_interview(
     role_description: str,
-    candidate: CandidateProfile,
+    candidate: CandidateDescription,
     client: LLMClient,
     trajectory: Trajectory,
     output_dir: Path,
@@ -87,13 +127,40 @@ def run_interview(
 
     console.print("[bold cyan]Step 3: Initializing belief state...[/bold cyan]")
     competence_names = [c.name for c in competence_model.competences]
+    weights = {c.name: c.weight for c in competence_model.competences}
     belief = BeliefState(competence_names)
+    threshold = get_config("threshold")
 
     max_steps = get_config("max_steps")
     step = 0
 
+    use_ig_selection = get_config("use_ig_selection", False)
+    use_llm_termination = get_config("use_llm_termination", True)
+    epsilon = get_config("epsilon", 0.05)
+    tau = get_config("tau", 0.1)
+    z_threshold = get_config("z_threshold", 2.0)
+    delta = get_config("delta", 0.001)
+    e_plus = get_config("e_plus", 0.5)
+    e_minus = get_config("e_minus", 0.5)
+
+    criteria = StoppingCriteria(
+        epsilon=epsilon,
+        tau=tau,
+        z_threshold=z_threshold,
+        delta=delta,
+    )
+
     while step < max_steps:
         console.print(f"\n[bold yellow]--- Step {step + 1} ---[/bold yellow]")
+
+        target_competences = None
+        if use_ig_selection and belief.alpha_beta:
+            target = select_best_competence(
+                belief.alpha_beta, weights, threshold, e_plus, e_minus
+            )
+            if target:
+                target_competences = [target]
+                console.print(f"[dim]IG selected target: {target}[/dim]")
 
         competence_json_str = json.dumps(competence_json)
         with yaspin(text="[action]", color="yellow"):
@@ -106,12 +173,15 @@ def run_interview(
                 action_generator_prompt=prompts.get("ACTION_GENERATOR_PROMPT"),
             )
 
+        if target_competences:
+            action.target_competences = target_competences
+
         console.print(Panel(f"[bold]Question:[/bold] {action.question}"))
         console.print(
             f"[dim]Target: {', '.join(action.target_competences)} | Type: {action.type}[/dim]"
         )
 
-        answer = input("Your answer ")
+        answer = input("Your answer: ")
 
         if answer.strip().startswith("/"):
             cmd = answer.strip().lower()
@@ -146,9 +216,19 @@ def run_interview(
         table = Table(title="Belief State")
         table.add_column("Competence", style="cyan")
         table.add_column("Probability", style="green")
+        table.add_column("α", style="dim")
+        table.add_column("β", style="dim")
         for comp in competence_names:
-            table.add_row(comp, f"{belief.probability(comp):.2f}")
+            alpha, beta = belief.alpha_beta.get(comp, (1.0, 1.0))
+            table.add_row(
+                comp,
+                f"{belief.probability(comp):.2f}",
+                f"{alpha:.2f}",
+                f"{beta:.2f}",
+            )
         console.print(table)
+
+        display_decision_stats(belief, weights, threshold)
 
         trajectory.add_turn(
             action=action.model_dump(),
@@ -157,23 +237,35 @@ def run_interview(
             belief=belief,
         )
 
-        with yaspin(text="[termination]", color="cyan"):
-            continue_interview, reason = should_continue(
-                belief=belief,
-                history=trajectory.get_history(),
-                client=client,
-                termination_prompt=prompts.get("TERMINATION_PROMPT"),
+        stop_reason = None
+        if belief.alpha_beta:
+            should_stop_flag, stop_reason = should_stop(
+                belief.alpha_beta, weights, threshold, criteria
             )
-        console.print(f"[dim]Termination check: {reason}[/dim]")
+            if should_stop_flag:
+                console.print(
+                    f"[bold yellow]Statistical stop: {stop_reason}[/bold yellow]"
+                )
+                break
 
-        step += 1
+        if use_llm_termination:
+            with yaspin(text="[termination]", color="cyan"):
+                continue_interview, term_reason = should_continue(
+                    belief=belief,
+                    history=trajectory.get_history(),
+                    client=client,
+                    termination_prompt=prompts.get("TERMINATION_PROMPT"),
+                )
+            console.print(f"[dim]LLM termination: {term_reason}[/dim]")
 
-        if step >= max_steps:
-            break
-
-        if not continue_interview:
-            console.print("[bold yellow]Interview ended early by model.[/bold yellow]")
-            break
+            step += 1
+            if step >= max_steps:
+                break
+            if not continue_interview:
+                console.print("[bold yellow]Interview ended early by model.[/yellow]")
+                break
+        else:
+            step += 1
 
     return belief, competence_model, candidate_sheet
 
@@ -187,11 +279,6 @@ def start(
 ):
     if output_dir is None:
         output_dir = DEFAULT_OUTPUT_DIR
-    try:
-        client = LLMClient()
-    except LLMError as e:
-        console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(1) from e
 
     role_desc = load_role_description(role_description)
 
@@ -213,15 +300,13 @@ def start(
     run_id = generate_run_id(config_name)
     console.print(f"[bold cyan]Starting interview with run_id: {run_id}[/bold cyan]")
 
+    llm_logger = LLMLogger(output_dir)
+    llm_logger.set_run_id(run_id)
+
     if candidate:
-        candidate_profile = CandidateProfile.model_validate_json(candidate.read_text())
+        candidate_description = candidate.read_text()
     else:
-        console.print("[dim]No candidate file provided, using default.[/dim]")
-        candidate_profile = CandidateProfile(
-            competences={"Python": 1, "Machine Learning": 1, "Data Analysis": 1},
-            fraud_strategy="honest",
-            linguistic_profile="simple",
-        )
+        candidate_description = prompt_candidate_description()
 
     traj_manager = TrajectoryManager(output_dir)
     config = {k: get_config(k) for k in ["threshold", "max_steps", "temperature"]}
@@ -237,9 +322,15 @@ def start(
     run_dir = output_dir / run_id
     console.print(f"[bold cyan]Output directory:[/bold cyan] {run_dir}")
 
+    try:
+        client = LLMClient(logger=llm_logger.log)
+    except LLMError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        raise typer.Exit(1) from e
+
     belief, competence_model, candidate_sheet = run_interview(
         role_desc,
-        candidate_profile,
+        candidate_description,
         client,
         trajectory,
         output_dir,
@@ -258,10 +349,16 @@ def start(
         console.print(f"\n[dim]Trajectory saved to {output_dir / run_id}[/dim]")
         return
 
+    use_stats = get_config("use_stats_decision", True)
     weights = {c.name: c.weight for c in competence_model.competences}
-    decision = compute_decision(belief, weights)
+    decision, stats = compute_decision(belief, weights, use_stats=use_stats)
 
     console.print("\n[bold magenta]=== FINAL DECISION ===[/bold magenta]")
+    if stats:
+        console.print(
+            f"[dim]P(Accept)={stats.p_accept:.3f} | P(Accept)MC={stats.p_accept_mc:.3f} | "
+            f"Z={stats.z_score:.2f} | Entropy={stats.entropy:.3f}[/dim]"
+        )
     if decision.accepted:
         console.print(
             f"[bold green]ACCEPTED[/bold green] (score: {decision.score:.2f})"
@@ -276,7 +373,7 @@ def start(
             history=trajectory.get_history(),
             belief_trajectory=trajectory.to_dict()["turns"],
             final_belief=final_belief,
-            decision=f"score: {decision.score:.2f}",
+            decision=f"score: {decision.score:.2f}, p_accept: {stats.p_accept if stats else 'N/A'}",
             client=client,
             explanation_prompt=prompts.get("EXPLANATION_PROMPT"),
         )
@@ -301,11 +398,6 @@ def fork(
 ):
     if output_dir is None:
         output_dir = DEFAULT_OUTPUT_DIR
-    try:
-        client = LLMClient()
-    except LLMError as e:
-        console.print(f"[bold red]Error:[/bold red] {e}")
-        raise typer.Exit(1) from e
 
     traj_manager = TrajectoryManager(output_dir)
 
@@ -324,6 +416,15 @@ def fork(
         f"[bold cyan]Forking from {run_id} at turn {turn_idx} with new run_id: {new_run_id}[/bold cyan]"
     )
 
+    llm_logger = LLMLogger(output_dir)
+    llm_logger.set_run_id(new_run_id)
+
+    try:
+        client = LLMClient(logger=llm_logger.log)
+    except LLMError as e:
+        console.print(f"[bold red]Error:[/bold red] {e}")
+        raise typer.Exit(1) from e
+
     new_traj = Trajectory(
         run_id=new_run_id,
         config=original_traj.config,
@@ -336,19 +437,20 @@ def fork(
     competence_names = [
         c["name"] for c in original_traj.competence_model.get("competences", [])
     ]
+    weights = {
+        c["name"]: c["weight"]
+        for c in original_traj.competence_model.get("competences", [])
+    }
     belief = BeliefState(competence_names)
 
     if new_traj.turns:
-        last_belief = new_traj.turns[-1].belief_after
+        last_belief_ab = new_traj.turns[-1].belief_alpha_beta
         for comp in competence_names:
-            if comp in last_belief:
-                alpha = 1.0
-                beta = 1.0
-                p = last_belief[comp]
-                if p > 0:
-                    alpha = p * (alpha + beta)
-                    beta = (1 - p) * (alpha + beta)
-                belief.set_alpha_beta(comp, alpha, beta)
+            if comp in last_belief_ab:
+                belief._alpha_beta[comp] = (
+                    last_belief_ab[comp]["alpha"],
+                    last_belief_ab[comp]["beta"],
+                )
 
     max_steps = get_config("max_steps")
     step = turn_idx + 1
@@ -373,7 +475,7 @@ def fork(
             f"[dim]Target: {', '.join(action.target_competences)} | Type: {action.type}[/dim]"
         )
 
-        answer = input("Your answer ")
+        answer = input("Your answer: ")
 
         if answer.strip().startswith("/"):
             cmd = answer.strip().lower()
@@ -432,14 +534,11 @@ def fork(
             break
 
         if not continue_interview:
-            console.print("[bold yellow]Interview ended early by model.[/bold yellow]")
+            console.print("[bold yellow]Interview ended early by model.[/yellow]")
             break
 
-    weights = {
-        c["name"]: c["weight"]
-        for c in original_traj.competence_model.get("competences", [])
-    }
-    decision = compute_decision(belief, weights)
+    use_stats = get_config("use_stats_decision", True)
+    decision, _ = compute_decision(belief, weights, use_stats=use_stats)
 
     console.print("\n[bold magenta]=== FINAL DECISION ===[/bold magenta]")
     if decision.accepted:

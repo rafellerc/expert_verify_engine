@@ -13,12 +13,14 @@ class Turn:
         answer: str,
         evidence: dict[str, Any],
         belief_after: dict[str, float],
+        belief_alpha_beta: dict[str, dict[str, float]],
     ) -> None:
         self.turn = turn
         self.action = action
         self.answer = answer
         self.evidence = evidence
         self.belief_after = belief_after
+        self.belief_alpha_beta = belief_alpha_beta
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -27,6 +29,7 @@ class Turn:
             "answer": self.answer,
             "evidence": self.evidence,
             "belief_after": self.belief_after,
+            "belief_alpha_beta": self.belief_alpha_beta,
         }
 
     @classmethod
@@ -37,6 +40,7 @@ class Turn:
             answer=data["answer"],
             evidence=data["evidence"],
             belief_after=data["belief_after"],
+            belief_alpha_beta=data.get("belief_alpha_beta", {}),
         )
 
 
@@ -71,6 +75,7 @@ class Trajectory:
             answer=answer,
             evidence=evidence,
             belief_after=belief.get_all_probabilities(),
+            belief_alpha_beta=belief.get_all_alpha_beta(),
         )
         self.turns.append(turn)
 

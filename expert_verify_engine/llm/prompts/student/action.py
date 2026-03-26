@@ -27,6 +27,9 @@ Guidelines:
 - Use "recall" for basic facts, "application" for using knowledge, "practice" for solving problems
 - One question at a time, no multi-part questions
 - Use concrete, specific questions
+- CRITICAL: You MUST test a different competency than previous questions. Review the conversation history above - if a competency was already tested (even with different phrasing), test a NEW competency that hasn't been evaluated yet
+- The belief state shows which competencies have been tested (higher probability = already tested). Prioritize competencies with probability around 0.5 that haven't been tested
+- If the candidate points out ambiguity or confusion in your question, acknowledge it and ask a clarifying version instead
 """
 
 TERMINATION_PROMPT = """Based on the conversation history and belief state, should the quiz continue or end?

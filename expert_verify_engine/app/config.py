@@ -15,11 +15,23 @@ CONFIG: dict[str, Any] = {
     "save_belief_trajectory": True,
     "output_dir": "output",
     "config_name": "default",
+    # v6 decision engine options
+    "p_accept_method": "gaussian",
+    "mc_samples": 10000,
+    "epsilon": 0.05,
+    "tau": 0.1,
+    "z_threshold": 2.0,
+    "delta": 0.001,
+    "e_plus": 0.5,
+    "e_minus": 0.5,
+    "use_llm_termination": True,
+    "use_ig_selection": False,
+    "use_stats_decision": True,
 }
 
 
-def get_config(key: str) -> Any:
-    return CONFIG.get(key)
+def get_config(key: str, default: Any = None) -> Any:
+    return CONFIG.get(key, default)
 
 
 def set_config(key: str, value: Any) -> None:

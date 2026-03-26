@@ -10,10 +10,7 @@ class CompetenceModel(BaseModel):
     competences: list[Competence]
 
 
-class CandidateProfile(BaseModel):
-    competences: dict[str, int]
-    fraud_strategy: str
-    linguistic_profile: str
+CandidateDescription = str
 
 
 class CandidateSheet(BaseModel):

@@ -1,10 +1,10 @@
 from expert_verify_engine.llm.client import LLMClient
-from expert_verify_engine.models.schemas import CandidateProfile, CandidateSheet
+from expert_verify_engine.models.schemas import CandidateDescription, CandidateSheet
 from expert_verify_engine.utils.parsing import parse_json
 
 
 def generate_candidate_sheet(
-    ground_truth: CandidateProfile,
+    ground_truth: CandidateDescription,
     client: LLMClient,
     candidate_generator_prompt: str | None = None,
 ) -> CandidateSheet:
@@ -14,6 +14,6 @@ def generate_candidate_sheet(
 
     candidate_prompt = candidate_generator_prompt or STUDENT_PROMPT  # noqa: N806
 
-    prompt = candidate_prompt.format(ground_truth=ground_truth.model_dump_json())
+    prompt = candidate_prompt.format(ground_truth=ground_truth)
     response = client.chat(prompt)
     return parse_json(response, CandidateSheet)

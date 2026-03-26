@@ -24,6 +24,12 @@ class BeliefState:
     def get_all_probabilities(self) -> dict[str, float]:
         return {comp: self.probability(comp) for comp in self._alpha_beta}
 
+    def get_all_alpha_beta(self) -> dict[str, dict[str, float]]:
+        return {
+            comp: {"alpha": alpha, "beta": beta}
+            for comp, (alpha, beta) in self._alpha_beta.items()
+        }
+
     def update(self, competence: str, e_plus: float, e_minus: float) -> None:
         if competence not in self._alpha_beta:
             self._alpha_beta[competence] = (1.0, 1.0)
