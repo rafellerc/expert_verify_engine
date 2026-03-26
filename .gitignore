@@ -2,3 +2,5 @@
 uv.lock
 *.pyc
 .env
+*egg-info/
+*.ipynb
