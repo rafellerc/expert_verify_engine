@@ -4,10 +4,15 @@ from typing import Any
 
 CONFIG: dict[str, Any] = {
     # "model": os.getenv("OPENROUTER_MODEL", "arcee-ai/trinity-large-preview:free"),
-    "model": os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
+    # "model": os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
     # "model": os.getenv("OPENROUTER_MODEL", "stepfun/step-3.5-flash:free"),
     # "model": os.getenv("OPENROUTER_MODEL", "z-ai/glm-4.5-air:free"),
-    # "model": os.getenv("OPENROUTER_MODEL", "mistralai/ministral-3b-2512"), # NOT FREE!!!!
+    ########### PAID MODELS ############
+    # "model": os.getenv("OPENROUTER_MODEL", "mistralai/ministral-14b-2512"),  # not good at reasoning
+    # "model": os.getenv("OPENROUTER_MODEL", "qwen/qwen3.5-flash-02-23"),
+    # "model": os.getenv("OPENROUTER_MODEL", "stepfun/step-3.5-flash"),
+    "model": os.getenv("OPENROUTER_MODEL", "openai/gpt-5.4-nano"),
+    ####################################
     "api_key": os.getenv("OPENROUTER_API_KEY"),
     "evidence_mode": "raw",
     "enable_reasoning": False,
@@ -26,9 +31,9 @@ CONFIG: dict[str, Any] = {
     "tau": 0.1,
     "z_threshold": 2.0,
     "delta": 0.001,
-    "evidence_multiplier": 2.0,
+    "evidence_multiplier": 10.0,
     "use_llm_termination": False,
-    "use_ig_selection": True,
+    "action_selection_mode": "information_gain_greedy",
     "use_stats_decision": True,
 }
 

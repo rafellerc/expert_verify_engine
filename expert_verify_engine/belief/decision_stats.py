@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import random
 from dataclasses import dataclass
 
 import numpy as np
@@ -199,8 +200,46 @@ def select_best_competence(
     e_plus: float = 0.5,
     e_minus: float = 0.5,
 ) -> str | None:
-    """Select competence with highest information gain."""
+    """Select competence with highest information gain (greedy)."""
     all_ig = _compute_all_ig(alpha_beta, weights, threshold, e_plus, e_minus)
     if not all_ig:
         return None
     return max(all_ig, key=all_ig.get)
+
+
+def select_competence_by_ig(
+    alpha_beta: dict[str, tuple[float, float]],
+    weights: dict[str, float],
+    threshold: float,
+    e_plus: float = 0.5,
+    e_minus: float = 0.5,
+    sampled: bool = False,
+) -> str | None:
+    """Select competence by information gain.
+
+    Args:
+        alpha_beta: Current belief state (alpha, beta per competence)
+        weights: Competence weights
+        threshold: Decision threshold
+        e_plus: Evidence weight for positive outcome
+        e_minus: Evidence weight for negative outcome
+        sampled: If True, sample proportionally to normalized IG weights.
+                 If False, select greedily (highest IG).
+
+    Returns:
+        Selected competence name or None
+    """
+    all_ig = _compute_all_ig(alpha_beta, weights, threshold, e_plus, e_minus)
+    if not all_ig:
+        return None
+
+    if sampled:
+        ig_values = list(all_ig.values())
+        comps = list(all_ig.keys())
+        total = sum(ig_values)
+        if total <= 0:
+            return random.choice(comps) if comps else None
+        normalized = [v / total for v in ig_values]
+        return random.choices(comps, weights=normalized, k=1)[0]
+    else:
+        return max(all_ig, key=all_ig.get)

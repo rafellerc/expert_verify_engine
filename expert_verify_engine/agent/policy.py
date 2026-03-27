@@ -17,6 +17,7 @@ def generate_question(
     history: str,
     client: LLMClient,
     action_generator_prompt: str | None = None,
+    ig_target_competence: str | None = None,
 ) -> Action:
     from expert_verify_engine.llm.prompts.student.action import (
         ACTION_GENERATOR_PROMPT as STUDENT_ACTION,
@@ -28,15 +29,22 @@ def generate_question(
     belief_state_str = json.dumps(belief.get_all_probabilities(), indent=2)
     candidate_sheet_str = f"Summary: {candidate_sheet.summary}\nExperiences: {', '.join(candidate_sheet.experiences)}\nClaims: {', '.join(candidate_sheet.claims)}"
 
+    ig_context = (
+        f"TARGET COMPETENCE: {ig_target_competence}\n"
+        f"Your question MUST primarily test this competence."
+    )
+
     prompt = action_prompt.format(
         competence_model=competence_model_str,
         candidate_sheet=candidate_sheet_str,
         belief_state=belief_state_str,
         history=history or "No previous questions.",
+        ig_target_competence=ig_context,
     )
 
     response = client.chat(prompt, prompt_type="ACTION_GENERATOR_PROMPT")
-    return parse_json(response, Action)
+    action = parse_json(response, Action)
+    return action
 
 
 def should_continue(
@@ -86,8 +94,12 @@ def generate_explanation(
         decision=decision,
     )
 
-    from expert_verify_engine.utils.parsing import extract_json
+    from expert_verify_engine.utils.parsing import (
+        extract_json,
+        sanitize_json_string,
+    )
 
     response = client.chat(prompt, prompt_type="EXPLANATION_PROMPT")
     json_str = extract_json(response)
+    json_str = sanitize_json_string(json_str)
     return json.loads(json_str)

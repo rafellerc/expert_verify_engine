@@ -4,8 +4,11 @@ from expert_verify_engine.models.schemas import EvidencePacket
 
 def update_belief(belief: BeliefState, evidence: EvidencePacket) -> BeliefState:
     for comp_name, comp_evidence in evidence.competence.items():
-        e_plus = max(0.0, min(1.0, comp_evidence.e_plus))
-        e_minus = max(0.0, min(1.0, comp_evidence.e_minus))
+        # e_plus = max(0.0, min(1.0, comp_evidence.e_plus))
+        # e_minus = max(0.0, min(1.0, comp_evidence.e_minus))
+        # TODO: Decide on Clipping strategy for evidence values
+        e_plus = comp_evidence.e_plus
+        e_minus = comp_evidence.e_minus
         belief.update(comp_name, e_plus, e_minus)
     return belief
 

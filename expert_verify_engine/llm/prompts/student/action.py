@@ -12,9 +12,11 @@ Current Belief State (probability of competence 0-1):
 Conversation History:
 {history}
 
+{ig_target_competence}
+
 Generate the next quiz question to evaluate the student's understanding.
 
-Output ONLY JSON:
+Output ONLY JSON (no extra text):
 {{
   "question": "your quiz question",
   "target_competences": ["list of competencies this question tests"],
@@ -22,14 +24,14 @@ Output ONLY JSON:
 }}
 
 Guidelines:
+
 - Keep questions simple and direct
-- Target competencies where belief is uncertain (around 0.5)
 - Use "recall" for basic facts, "application" for using knowledge, "practice" for solving problems
 - One question at a time, no multi-part questions
 - Use concrete, specific questions
-- CRITICAL: You MUST test a different competency than previous questions. Review the conversation history above - if a competency was already tested (even with different phrasing), test a NEW competency that hasn't been evaluated yet
-- The belief state shows which competencies have been tested (higher probability = already tested). Prioritize competencies with probability around 0.5 that haven't been tested
 - If the candidate points out ambiguity or confusion in your question, acknowledge it and ask a clarifying version instead
+- Questions should require simple text answers, no multiple choice or complex formats
+- The candidate should not be asked to answer multiple questions at once
 """
 
 TERMINATION_PROMPT = """Based on the conversation history and belief state, should the quiz continue or end?

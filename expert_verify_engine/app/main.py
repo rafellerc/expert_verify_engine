@@ -23,7 +23,7 @@ from expert_verify_engine.audit_log.llm_logger import LLMLogger
 from expert_verify_engine.belief.belief_state import BeliefState
 from expert_verify_engine.belief.decision_stats import (
     compute_decision_stats,
-    select_best_competence,
+    select_competence_by_ig,
 )
 from expert_verify_engine.belief.stopping import StoppingCriteria, should_stop
 from expert_verify_engine.belief.updater import update_belief
@@ -36,6 +36,7 @@ from expert_verify_engine.llm.prompts.loader import (
 from expert_verify_engine.models.candidate import generate_candidate_sheet
 from expert_verify_engine.models.generators import generate_competences
 from expert_verify_engine.models.schemas import (
+    ActionSelectionMode,
     CandidateDescription,
     CandidateSheet,
     CompetenceModel,
@@ -134,7 +135,10 @@ def run_interview(
     max_steps = get_config("max_steps")
     step = 0
 
-    use_ig_selection = get_config("use_ig_selection", False)
+    action_selection_mode_str = get_config(
+        "action_selection_mode", "information_gain_greedy"
+    )
+    action_selection_mode = ActionSelectionMode(action_selection_mode_str)
     use_llm_termination = get_config("use_llm_termination", True)
     epsilon = get_config("epsilon", 0.05)
     tau = get_config("tau", 0.1)
@@ -152,18 +156,20 @@ def run_interview(
     while step < max_steps:
         console.print(f"\n[bold yellow]--- Step {step + 1} ---[/bold yellow]")
 
-        target_competences = None
-        if use_ig_selection and belief.alpha_beta:
-            target = select_best_competence(
+        sampled = action_selection_mode == ActionSelectionMode.INFORMATION_GAIN_SAMPLED
+        ig_target = None
+        if belief.alpha_beta:
+            ig_target = select_competence_by_ig(
                 belief.alpha_beta,
                 weights,
                 threshold,
                 evidence_multiplier,
                 evidence_multiplier,
+                sampled=sampled,
             )
-            if target:
-                target_competences = [target]
-                console.print(f"[dim]IG selected target: {target}[/dim]")
+            if ig_target:
+                mode_str = "IG Sampled" if sampled else "IG Greedy"
+                console.print(f"[dim]{mode_str} selected target: {ig_target}[/dim]")
 
         competence_json_str = json.dumps(competence_json)
         with yaspin(text="[action]", color="yellow"):
@@ -174,14 +180,12 @@ def run_interview(
                 history=trajectory.get_history() if trajectory.turns else "",
                 client=client,
                 action_generator_prompt=prompts.get("ACTION_GENERATOR_PROMPT"),
+                ig_target_competence=ig_target,
             )
-
-        if target_competences:
-            action.target_competences = target_competences
 
         console.print(Panel(f"[bold]Question:[/bold] {action.question}"))
         console.print(
-            f"[dim]Target: {', '.join(action.target_competences)} | Type: {action.type}[/dim]"
+            f"[dim]Target: {', '.join(action.target_competences)} | Type: {action.type} | Selection: {action_selection_mode.value}[/dim]"
         )
 
         answer = input("Your answer: ")

@@ -81,7 +81,10 @@ Where:
 - E[H_after] = μ_i * H_pos + (1-μ_i) * H_neg
 ```
 
-Select question targeting competence with highest IG.
+The system selects the competence with highest IG as the target for the next question.
+Two modes are available:
+- **Greedy** (default): Always selects the competence with maximum IG
+- **Sampled**: Samples a competence proportionally to normalized IG weights
 
 ### 6. Statistical Stopping Criteria
 
@@ -257,8 +260,8 @@ Edit `app/config.py` to customize:
 | `delta` | `0.001` | Max IG stop threshold |
 | `e_plus` | `0.5` | Positive evidence weight |
 | `e_minus` | `0.5` | Negative evidence weight |
-| `use_llm_termination` | `True` | Fallback to LLM termination |
-| `use_ig_selection` | `False` | Use IG for question targeting |
+| `use_llm_termination` | `False` | Fallback to LLM termination |
+| `action_selection_mode` | `"information_gain_greedy"` | Question selection mode: `"information_gain_greedy"` or `"information_gain_sampled"` |
 | `use_stats_decision` | `True` | Use P(Accept) for decision |
 
 ---

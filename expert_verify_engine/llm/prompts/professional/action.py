@@ -12,6 +12,8 @@ Current Belief State (probability of competence 0-1):
 Conversation History:
 {history}
 
+{ig_target_competence}
+
 Generate the next interview question to evaluate the candidate.
 
 Output ONLY JSON:

@@ -1,4 +1,11 @@
+from enum import StrEnum
+
 from pydantic import BaseModel, Field
+
+
+class ActionSelectionMode(StrEnum):
+    INFORMATION_GAIN_GREEDY = "information_gain_greedy"
+    INFORMATION_GAIN_SAMPLED = "information_gain_sampled"
 
 
 class Competence(BaseModel):
@@ -23,6 +30,7 @@ class Action(BaseModel):
     question: str
     target_competences: list[str]
     type: str
+    action_selection: ActionSelectionMode = ActionSelectionMode.INFORMATION_GAIN_GREEDY
 
 
 class EvidenceCompetence(BaseModel):
