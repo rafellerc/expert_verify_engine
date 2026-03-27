@@ -41,6 +41,7 @@ from expert_verify_engine.models.schemas import (
     CompetenceModel,
 )
 from expert_verify_engine.observation.evaluator import evaluate_answer
+from expert_verify_engine.observation.evidence import transform_evidence
 
 app = typer.Typer()
 console = Console()
@@ -67,15 +68,14 @@ def display_decision_stats(
     """Display decision statistics in console."""
     alpha_beta = belief.alpha_beta
     mc_samples = get_config("mc_samples", 10000)
-    e_plus = get_config("e_plus", 0.5)
-    e_minus = get_config("e_minus", 0.5)
+    evidence_multiplier = get_config("evidence_multiplier", 0.5)
 
     stats = compute_decision_stats(
         alpha_beta,
         weights,
         threshold,
-        e_plus=e_plus,
-        e_minus=e_minus,
+        e_plus=evidence_multiplier,
+        e_minus=evidence_multiplier,
         mc_samples=mc_samples,
     )
 
@@ -140,8 +140,7 @@ def run_interview(
     tau = get_config("tau", 0.1)
     z_threshold = get_config("z_threshold", 2.0)
     delta = get_config("delta", 0.001)
-    e_plus = get_config("e_plus", 0.5)
-    e_minus = get_config("e_minus", 0.5)
+    evidence_multiplier = get_config("evidence_multiplier", 0.5)
 
     criteria = StoppingCriteria(
         epsilon=epsilon,
@@ -156,7 +155,11 @@ def run_interview(
         target_competences = None
         if use_ig_selection and belief.alpha_beta:
             target = select_best_competence(
-                belief.alpha_beta, weights, threshold, e_plus, e_minus
+                belief.alpha_beta,
+                weights,
+                threshold,
+                evidence_multiplier,
+                evidence_multiplier,
             )
             if target:
                 target_competences = [target]
@@ -211,7 +214,44 @@ def run_interview(
                 observation_prompt=prompts.get("OBSERVATION_PROMPT"),
             )
 
-        update_belief(belief, evidence)
+        sensitivity = get_config("evidence_multiplier", 0.5)
+
+        alpha_beta_before = {}
+        for comp in action.target_competences:
+            alpha_beta_before[comp] = belief.alpha_beta.get(comp, (1.0, 1.0))
+
+        console.print(
+            Panel(
+                f"[bold]Raw LLM evidence:[/bold]\n{evidence.notes}\n"
+                f"e_plus: {list(evidence.competence.values())[0].e_plus:.3f}, "
+                f"e_minus: {list(evidence.competence.values())[0].e_minus:.3f}",
+                title="Observation",
+                expand=False,
+            )
+        )
+
+        adjusted_evidence = transform_evidence(evidence, sensitivity)
+
+        console.print(
+            Panel(
+                f"[bold]Adjusted evidence (×{sensitivity}):[/bold]\n"
+                f"e_plus: {list(adjusted_evidence.competence.values())[0].e_plus:.3f}, "
+                f"e_minus: {list(adjusted_evidence.competence.values())[0].e_minus:.3f}",
+                title="Evidence Multiplier",
+                expand=False,
+            )
+        )
+
+        update_belief(belief, adjusted_evidence)
+
+        console.print("[bold]Alpha/Beta Updates:[/bold]")
+        for comp in action.target_competences:
+            alpha_before, beta_before = alpha_beta_before[comp]
+            alpha_after, beta_after = belief.alpha_beta.get(comp, (1.0, 1.0))
+            console.print(
+                f"  {comp}: α {alpha_before:.2f}→{alpha_after:.2f}, "
+                f"β {beta_before:.2f}→{beta_after:.2f}"
+            )
 
         table = Table(title="Belief State")
         table.add_column("Competence", style="cyan")
@@ -299,6 +339,7 @@ def start(
         )
 
     run_id = generate_run_id(config_name)
+    console.print(f"[bold cyan]Using model: {get_config('model')}[/bold cyan]")
     console.print(f"[bold cyan]Starting interview with run_id: {run_id}[/bold cyan]")
 
     llm_logger = LLMLogger(output_dir)
