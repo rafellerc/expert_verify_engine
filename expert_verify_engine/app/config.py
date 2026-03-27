@@ -3,7 +3,11 @@ from datetime import datetime
 from typing import Any
 
 CONFIG: dict[str, Any] = {
-    "model": os.getenv("OPENROUTER_MODEL", "arcee-ai/trinity-large-preview:free"),
+    # "model": os.getenv("OPENROUTER_MODEL", "arcee-ai/trinity-large-preview:free"),
+    "model": os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free"),
+    # "model": os.getenv("OPENROUTER_MODEL", "stepfun/step-3.5-flash:free"),
+    # "model": os.getenv("OPENROUTER_MODEL", "z-ai/glm-4.5-air:free"),
+    # "model": os.getenv("OPENROUTER_MODEL", "mistralai/ministral-3b-2512"), # NOT FREE!!!!
     "api_key": os.getenv("OPENROUTER_API_KEY"),
     "evidence_mode": "raw",
     "enable_reasoning": False,
@@ -22,10 +26,9 @@ CONFIG: dict[str, Any] = {
     "tau": 0.1,
     "z_threshold": 2.0,
     "delta": 0.001,
-    "e_plus": 0.5,
-    "e_minus": 0.5,
-    "use_llm_termination": True,
-    "use_ig_selection": False,
+    "evidence_multiplier": 2.0,
+    "use_llm_termination": False,
+    "use_ig_selection": True,
     "use_stats_decision": True,
 }
 

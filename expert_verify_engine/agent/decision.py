@@ -21,15 +21,14 @@ def compute_decision(
     if use_stats:
         alpha_beta = belief.alpha_beta
         mc_samples = get_config("mc_samples", 10000)
-        e_plus = get_config("e_plus", 0.5)
-        e_minus = get_config("e_minus", 0.5)
+        evidence_multiplier = get_config("evidence_multiplier", 0.5)
 
         stats = compute_decision_stats(
             alpha_beta,
             weights,
             threshold,
-            e_plus=e_plus,
-            e_minus=e_minus,
+            e_plus=evidence_multiplier,
+            e_minus=evidence_multiplier,
             mc_samples=mc_samples,
         )
 
