@@ -30,7 +30,7 @@ CONFIG: dict[str, Any] = {
     "epsilon": 0.05,
     "tau": 0.1,
     "z_threshold": 2.0,
-    "delta": 0.001,
+    "delta": 0.005,
     "evidence_multiplier": 10.0,
     "use_llm_termination": False,
     "action_selection_mode": "information_gain_greedy",

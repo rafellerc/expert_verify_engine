@@ -257,7 +257,7 @@ Edit `app/config.py` to customize:
 | `epsilon` | `0.05` | P(Accept) stop threshold |
 | `tau` | `0.1` | Entropy stop threshold |
 | `z_threshold` | `2.0` | Z-score stop threshold |
-| `delta` | `0.001` | Max IG stop threshold |
+| `delta` | `0.005` | Max IG stop threshold |
 | `e_plus` | `0.5` | Positive evidence weight |
 | `e_minus` | `0.5` | Negative evidence weight |
 | `use_llm_termination` | `False` | Fallback to LLM termination |
