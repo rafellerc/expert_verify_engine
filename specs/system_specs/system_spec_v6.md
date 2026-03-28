@@ -14,7 +14,7 @@ Where:
 - `history`: sequence of interview interactions
 
 The system operates as a **sequential decision process with latent state estimation**, now enhanced with **statistical decision-making** for P(Accept) estimation, question selection via Information Gain, and quantitative stopping criteria.
-
+ 
 ---
 
 ## 2. System Overview
@@ -213,13 +213,15 @@ Select question targeting competence with highest IG.
 
 ### 3.10 Action Model (Question Policy)
 
-LLM selects next question based on:
+The system computes Information Gain for each competence and selects the target competence automatically (greedy or sampled based on config). The LLM then generates a question targeting the selected competence.
+
+LLM receives as input:
 
 - Competence model
 - Candidate sheet
 - Current belief state
 - Conversation history
-- (v6) Target competence from IG selection
+- Selected target competence from IG calculation
 
 Output:
 
@@ -531,8 +533,8 @@ CONFIG = {
     "delta": 0.01,
     "e_plus": 0.5,
     "e_minus": 0.5,
-    "use_llm_termination": True,
-    "use_ig_selection": False,
+    "use_llm_termination": False,
+    "action_selection_mode": "information_gain_greedy",  # "information_gain_greedy" | "information_gain_sampled"
 }
 ```
 
@@ -748,8 +750,8 @@ def should_stop(
 8. Loop through questions:
    - Compute decision statistics (v6)
    - Check statistical stopping (v6)
-   - Optionally select competence via IG (v6)
-   - Generate question
+   - Select target competence via IG (greedy or sampled based on config)
+   - Generate question targeting selected competence
    - Evaluate answer
    - Update belief
    - Check LLM termination (fallback)
@@ -809,7 +811,7 @@ The system is:
 | **Variance** | Not computed | Full Beta variance |
 | **Uncertainty** | None | Entropy |
 | **Decision Z** | None | Z-score |
-| **Question selection** | LLM decides | Optional IG-based |
+| **Question selection** | LLM decides | IG greedy or sampled (LLM-only removed) |
 | **Stopping** | LLM only | Statistical + LLM fallback |
 | **Decision output** | Score | Score + P(Accept) + Z + entropy |
 
